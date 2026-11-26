@@ -1,0 +1,24 @@
+---
+/**
+ * The brand line, worded the same everywhere:  MSDEVBUILD · Multi-Stack Dev Build
+ * variant "byline" adds the author photo (pass the site's own `authorImage` path) and an optional updated date.
+ * Styling hooks the site may define: .header-ms (the "MS" accent), .text-muted.
+ */
+import { BRAND } from '../src/brand';
+interface Props { variant?: 'byline' | 'inline' | 'light'; class?: string; date?: Date; authorImage?: string }
+const { variant = 'inline', class: cls = '', date, authorImage } = Astro.props;
+const when = date?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+---
+{variant === 'byline' ? (
+  <p class={`brand-byline flex items-center gap-2.5 text-sm ${cls}`}>
+    {authorImage && <img src={authorImage} alt="" width="32" height="32" loading="lazy" class="size-8 shrink-0 rounded-full object-cover ring-2 ring-[var(--accent)]/25" />}
+    <span class="leading-snug">
+      <strong class="font-semibold"><span class="header-ms">MS</span>DEVBUILD</strong><span class="text-muted"> · {BRAND.orgFull}</span>
+      {when && <span class="block text-xs text-muted">Updated <time datetime={date!.toISOString().slice(0, 10)}>{when}</time></span>}
+    </span>
+  </p>
+) : (
+  <p class={`brand-line text-sm ${variant === 'light' ? 'text-white/80' : 'text-muted'} ${cls}`}>
+    <strong class={variant === 'light' ? 'text-white' : 'text-[var(--text)]'}>{BRAND.org}</strong> · {BRAND.orgFull}
+  </p>
+)}

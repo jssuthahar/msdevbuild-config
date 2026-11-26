@@ -1,0 +1,82 @@
+/*
+ * MSDEVBUILD design tokens, shared by every site.
+ * Import right after Tailwind:  @import '@msdevbuild/config/tokens.css';
+ * Then override anything site-specific in the site's own :root / [data-theme='dark'].
+ * Theme switch: a data-theme="dark" attribute on <html>, set before paint.
+ */
+
+@theme {
+  --font-sans: 'Segoe UI Variable Text', 'Segoe UI', 'Inter Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, monospace;
+  --color-brand-50: #f3f8fd;
+  --color-brand-100: #deecf9;
+  --color-brand-300: #8db9e2;
+  --color-brand-500: #0078d4;
+  --color-brand-600: #006cbe;
+  --color-brand-700: #005a9e;
+  --color-brand-900: #003a66;
+}
+
+:root {
+  --bg: #ffffff;
+  --bg-subtle: #f3f8fd;
+  --bg-code: #f3f8fd;
+  --border: #d5dfea;
+  --text: #0b1020;
+  --text-muted: #4a5163;
+  --accent: #0078d4;
+  --accent-deep: #005a9e;
+  --accent-soft: #deecf9;
+  --ink: #005a9e;
+  --ink-text: #ffffff;
+  --band: linear-gradient(160deg, #006cbe, #004f8c);
+  --page-wash:
+    radial-gradient(34vmax 34vmax at 0% 0%, rgb(0 120 212 / 0.16), transparent 70%),
+    radial-gradient(30vmax 30vmax at 100% 12%, rgb(199 224 244 / 0.5), transparent 70%),
+    radial-gradient(34vmax 34vmax at 96% 100%, rgb(0 90 158 / 0.1), transparent 70%),
+    linear-gradient(135deg, #ffffff, #f3f8fd 55%, #deecf9);
+  --glass-line: rgb(255 255 255 / 0.9);
+  --glass-shadow: 0 10px 32px -6px rgb(0 90 158 / 0.14), 0 1px 2px rgb(0 90 158 / 0.06);
+
+  /* Premium glass: strong light fill, a lit edge and a real lift. */
+  --gp-fill: linear-gradient(145deg, rgb(255 255 255 / 0.86), rgb(255 255 255 / 0.68));
+  --gp-edge: linear-gradient(145deg, rgb(255 255 255 / 1), rgb(255 255 255 / 0.25) 45%, rgb(0 120 212 / 0.4));
+  --gp-shadow:
+    0 28px 64px -20px rgb(0 72 130 / 0.36), 0 6px 16px -8px rgb(0 72 130 / 0.16),
+    inset 0 1px 0 rgb(255 255 255 / 0.85);
+  --gp-tile-line: rgb(255 255 255 / 0.85);
+  --gp-blob-a: rgb(0 120 212 / 0.5);
+  --gp-blob-b: rgb(120 190 245 / 0.6);
+  --gp-text: linear-gradient(100deg, #006abc, #004f8c);
+}
+
+[data-theme='dark'] {
+  --bg: #0b1424;
+  --bg-subtle: #122036;
+  --bg-code: #101c30;
+  --border: #263a55;
+  --text: #eef4fb;
+  --text-muted: #a9b7c9;
+  --accent: #63b1ee;
+  --accent-soft: #12375a;
+  --ink: #0078d4;
+  --ink-text: #ffffff;
+  --band: linear-gradient(160deg, #0b3f6c, #0a2746);
+  --page-wash:
+    radial-gradient(34vmax 34vmax at 0% 0%, rgb(0 120 212 / 0.22), transparent 70%),
+    radial-gradient(30vmax 30vmax at 100% 12%, rgb(0 90 158 / 0.18), transparent 70%),
+    radial-gradient(34vmax 34vmax at 96% 100%, rgb(0 120 212 / 0.14), transparent 70%),
+    linear-gradient(135deg, #0b1424, #0d1a2e 55%, #10233d);
+  --glass-line: rgb(120 170 220 / 0.18);
+  --glass-shadow: 0 10px 32px -6px rgb(0 0 0 / 0.45);
+
+  --gp-fill: linear-gradient(145deg, rgb(24 44 74 / 0.86), rgb(12 24 44 / 0.8));
+  --gp-edge: linear-gradient(145deg, rgb(160 205 245 / 0.55), rgb(120 170 220 / 0.1) 45%, rgb(0 120 212 / 0.5));
+  --gp-shadow:
+    0 28px 64px -20px rgb(0 0 0 / 0.7), 0 6px 16px -8px rgb(0 0 0 / 0.4),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
+  --gp-tile-line: rgb(160 205 245 / 0.18);
+  --gp-blob-a: rgb(0 120 212 / 0.55);
+  --gp-blob-b: rgb(0 90 158 / 0.55);
+  --gp-text: linear-gradient(100deg, #8fcbf7, #63b1ee);
+}
