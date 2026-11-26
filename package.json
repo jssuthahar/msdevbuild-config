@@ -4,15 +4,26 @@
   "description": "Shared MSDEVBUILD brand: design tokens, brand data and a few Astro components used by every MSDEVBUILD site.",
   "type": "module",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/jssuthahar/msdevbuild-config.git" },
-  "keywords": ["astro-component", "msdevbuild"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jssuthahar/msdevbuild-config.git"
+  },
+  "keywords": [
+    "astro-component",
+    "msdevbuild"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./brand": "./src/brand.ts",
     "./tokens.css": "./styles/tokens.css",
-    "./components/*": "./components/*"
+    "./components/*": "./components/*",
+    "./base.css": "./styles/base.css"
   },
-  "files": ["src", "styles", "components"],
+  "files": [
+    "src",
+    "styles",
+    "components"
+  ],
   "peerDependencies": {
     "astro": ">=5",
     "tailwindcss": ">=4"
