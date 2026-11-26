@@ -129,6 +129,133 @@
     pointer-events: none;
   }
 
+  /* The "MS" of the wordmark, in the brand line and both site headers. */
+  .header-ms {
+    color: var(--accent);
+  }
+
+  /* ---------- Glass header (azure.msdevbuild.com design) ----------
+     Put .hdr-glass on the sticky <header>. The frosted layer is a ::before, so
+     the header itself is not a backdrop root and the fixed .glass-menu dropdowns
+     can blur the page behind them too. Add .is-scrolled once the page scrolls
+     under it for a deeper shadow. */
+  header.hdr-glass {
+    isolation: isolate;
+    background: transparent;
+  }
+  .hdr-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--hdr-fill);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    backdrop-filter: blur(18px) saturate(180%);
+    transition: box-shadow 0.25s, background 0.25s;
+  }
+  /* The azure-to-violet hairline along the bottom edge. */
+  .hdr-glass::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 1px;
+    pointer-events: none;
+    background: var(--hdr-line);
+  }
+  .hdr-glass.is-scrolled::before {
+    box-shadow: var(--hdr-shadow);
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .hdr-glass::before {
+      background: var(--bg);
+    }
+  }
+
+  /* A search box or other input sitting on the glass header. */
+  .glass-field {
+    background: var(--field-fill);
+    border-color: var(--field-line);
+    box-shadow: inset 0 1px 2px rgb(0 40 90 / 0.06);
+  }
+
+  /* ---------- Glass pill menu ----------
+     <ul class="glass-pill-nav"><li><a aria-current="page">…</a></li>…</ul>
+     A <button data-active> works as a group trigger. Selectors are one element
+     deeper than a site's own `.topbar a` rules, so the pill wins. */
+  .glass-pill-nav {
+    display: flex;
+    align-items: stretch;
+    width: max-content;
+    margin-inline: auto;
+    padding: 4px;
+    gap: 2px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--glass-line);
+    box-shadow: var(--glass-shadow), var(--nav-inset);
+  }
+  .glass-pill-nav > li > :is(a, button) {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 38px;
+    padding: 0 1rem;
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .glass-pill-nav > li > :is(a, button):hover {
+    background: var(--nav-hover);
+    color: var(--text);
+  }
+  .glass-pill-nav > li > :is(a, button):is([aria-current='page'], [data-active]) {
+    background: var(--nav-active);
+    color: #fff;
+    box-shadow: 0 6px 16px -6px rgb(0 100 200 / 0.65), inset 0 1px 0 rgb(255 255 255 / 0.25);
+  }
+
+  /* ---------- Glass dropdown ----------
+     The site positions it (fixed/absolute, width); this gives it the glass. */
+  .glass-menu {
+    border-radius: 16px;
+    padding: 8px;
+    background: var(--menu-fill);
+    border: 1px solid var(--menu-line);
+    color: var(--text);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    box-shadow: var(--menu-shadow);
+    transform-origin: top left;
+  }
+  .glass-menu:not([hidden]) {
+    animation: glass-pop 0.16s ease-out;
+  }
+  @keyframes glass-pop {
+    from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-menu {
+      background: var(--bg);
+    }
+  }
+  .glass-menu-item {
+    border-radius: 10px;
+    transition: background 0.15s;
+  }
+  /* !important: a menu usually sits inside a nav whose own link hover would win. */
+  .glass-menu-item:is(:hover, :focus-visible, [aria-current='page']) {
+    background: linear-gradient(90deg, rgb(0 120 212 / 0.12), rgb(91 63 184 / 0.06)) !important;
+  }
+  .glass-menu-ico {
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgb(0 120 212 / 0.14), rgb(91 63 184 / 0.12));
+    border: 1px solid rgb(0 120 212 / 0.12);
+  }
+
   /* Rises into view on scroll, browser-only, no script. `translate`, not
      `transform`, so it never fights a tile's hover lift. */
   @media (prefers-reduced-motion: no-preference) {
