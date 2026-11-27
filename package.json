@@ -17,7 +17,8 @@
     "./brand": "./src/brand.ts",
     "./tokens.css": "./styles/tokens.css",
     "./components/*": "./components/*",
-    "./base.css": "./styles/base.css"
+    "./base.css": "./styles/base.css",
+    "./firebase": "./src/firebase.ts"
   },
   "files": [
     "src",
