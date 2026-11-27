@@ -12,7 +12,7 @@ skills and content guards live in the private `msdevbuild-tools` repo.
 |---|---|
 | `styles/tokens.css` | Brand colours, fonts and the light/dark tokens both sites share |
 | `src/brand.ts` | `BRAND` (name, brand line, author, links) and `SOCIAL` profiles |
-| `src/firebase.ts` | `FIREBASE` web config for the shared project `msdevbuild-azure` (public identifiers, not secrets) |
+| `src/firebase.ts` | `FIREBASE` web config for the shared project `msdevbuild-azure` (public identifiers; the API key stays in each site, see the file) |
 | `components/BrandLine.astro` | `MSDEVBUILD · Multi-Stack Dev Build`, inline or as a byline |
 | `components/SocialLinks.astro` | Round social badges |
 | `components/ShareButtons.astro` | LinkedIn / X / WhatsApp / Facebook / copy / native share |
