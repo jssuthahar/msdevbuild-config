@@ -22,12 +22,14 @@
     "./engage": "./src/engage.ts",
     "./activity": "./src/activity.ts",
     "./account": "./src/account.ts",
-    "./country": "./src/country.ts"
+    "./country": "./src/country.ts",
+    "./scripts/*": "./scripts/*"
   },
   "files": [
+    "components",
+    "scripts",
     "src",
-    "styles",
-    "components"
+    "styles"
   ],
   "peerDependencies": {
     "astro": ">=5",

@@ -110,6 +110,13 @@ export interface AccountOptions {
   firebase: Record<string, string>;
   /** () => Promise.all([import('firebase/app'), import('firebase/auth')]) — from the site, so its own package is used. */
   load: Loader;
+  /**
+   * The live site's host (e.g. blog.msdevbuild.com). On that host sign-in runs
+   * through the site's own /__/auth/handler (scripts/auth-helper.mjs), so
+   * Google names our domain, not msdevbuild-azure.firebaseapp.com. Elsewhere
+   * (localhost, previews) the default handler is used.
+   */
+  authHost?: string;
 }
 
 let opts: AccountOptions | null = null;
@@ -117,7 +124,9 @@ let authP: Promise<{ auth: any; m: any }> | null = null;
 
 function getAuth() {
   return (authP ??= opts!.load().then(([appM, m]) => {
-    const app = appM.getApps().find((x: any) => x.name === 'msdb-account') ?? appM.initializeApp(opts!.firebase, 'msdb-account');
+    const own = opts!.authHost && location.hostname === opts!.authHost;
+    const config = own ? { ...opts!.firebase, authDomain: opts!.authHost } : opts!.firebase;
+    const app = appM.getApps().find((x: any) => x.name === 'msdb-account') ?? appM.initializeApp(config, 'msdb-account');
     const auth = m.getAuth(app);
     m.onAuthStateChanged(auth, (u: any) => {
       setHint(u ? { uid: u.uid, name: u.displayName || 'Reader', email: u.email || '', photo: u.photoURL || '' } : null);
