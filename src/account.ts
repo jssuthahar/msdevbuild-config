@@ -215,6 +215,12 @@ export function startAccount(options: AccountOptions) {
     },
   };
   if (!first) return;
+  // Astro's ClientRouter copies the new page's <html> attributes on every soft
+  // navigation, which drops data-auth and hides both Sign in and the avatar.
+  // Put it back before the new page paints.
+  document.addEventListener('astro:after-swap', () => {
+    document.documentElement.dataset.auth = hint() ? 'in' : 'out';
+  });
   // Signed in before (Firebase then confirms, or signs out if another site
   // signed out since), back from a redirect sign-in, or signed in on another
   // MSDEVBUILD site (sso): load Firebase in the background.
