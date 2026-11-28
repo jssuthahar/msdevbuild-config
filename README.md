@@ -16,6 +16,8 @@ skills and content guards live in the private `msdevbuild-tools` repo.
 | `components/BrandLine.astro` | `MSDEVBUILD · Multi-Stack Dev Build`, inline or as a byline |
 | `components/SocialLinks.astro` | Round social badges |
 | `components/ShareButtons.astro` | LinkedIn / X / WhatsApp / Facebook / copy / native share |
+| `components/SiteEngage.astro` | Promotions, feature switches, featured slot and campaign/push counts from admin.msdevbuild.com. Once, first inside `<body>`: `<SiteEngage site="blog" />` |
+| `src/engage.ts` (`@msdevbuild/config/engage`) | `currentCampaign()` for forms (send it as `campaign`), `featureOn(key)` before opening anything switchable |
 
 Only things that are the same on every site belong here. A component that knows about
 exams, lessons or blog posts stays in its own repo.

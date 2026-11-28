@@ -18,7 +18,8 @@
     "./tokens.css": "./styles/tokens.css",
     "./components/*": "./components/*",
     "./base.css": "./styles/base.css",
-    "./firebase": "./src/firebase.ts"
+    "./firebase": "./src/firebase.ts",
+    "./engage": "./src/engage.ts"
   },
   "files": [
     "src",

@@ -1,0 +1,77 @@
+---
+/**
+ * Promotions, feature switches, the featured slot and campaign/push counting,
+ * all driven from admin.msdevbuild.com (Grow → Promotions, Campaigns, Site
+ * settings). Put it once, first thing inside <body>:
+ *
+ *   <SiteEngage site="blog" />
+ *
+ * Mark switchable parts with data-msdb-feature="<key>" (keys are listed per
+ * site in msdevbuild-admin api/src/sites.js), and place an empty
+ * <div data-msdb-featured hidden></div> where a featured item may show.
+ * Logic lives in src/engage.ts.
+ */
+interface Props { site: string }
+const { site } = Astro.props;
+---
+<script is:inline define:vars={{ site }}>
+  // Before paint: hide switched-off features from the last known config, so
+  // nothing flashes in and out. The module below refreshes it.
+  try {
+    var c = JSON.parse(localStorage.getItem('msdb:cfg:' + site) || 'null');
+    var off = Object.keys((c && c.cfg && c.cfg.features) || {}).filter(function (k) { return c.cfg.features[k] === false; });
+    if (off.length) {
+      document.documentElement.dataset.msdbOff = off.join(' ');
+      var s = document.createElement('style');
+      s.id = 'msdb-off';
+      s.textContent = off.map(function (k) { return '[data-msdb-feature="' + k.replace(/"/g, '') + '"]{display:none!important}'; }).join('');
+      document.head.appendChild(s);
+    }
+  } catch (e) { /* storage blocked: defaults (everything on) */ }
+</script>
+<span id="msdb-engage" data-site={site} hidden></span>
+
+<script>
+  import { run } from '../src/engage';
+  const go = () => {
+    const site = document.getElementById('msdb-engage')?.dataset.site;
+    if (site) void run(site);
+  };
+  // Module scripts run once per full load. With view transitions the page
+  // changes without a reload, so run again after every swap.
+  go();
+  document.addEventListener('astro:after-swap', go);
+</script>
+
+<style is:global>
+  .msdb-bar { position: relative; z-index: 60; display: flex; align-items: center; justify-content: center; gap: .5rem; padding: .55rem 2.75rem; font-size: .9rem; line-height: 1.4; text-align: center; }
+  .msdb-bar p { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .35rem .9rem; margin: 0; font-weight: 600; }
+  .msdb-brand { background: linear-gradient(135deg, #0078d4, #4b3fc0); color: #fff; }
+  .msdb-info { background: #deecf9; color: #003a66; }
+  .msdb-success { background: #dff6dd; color: #0e4d27; }
+  .msdb-warn { background: #fff4ce; color: #5c3b00; }
+  [data-theme='dark'] .msdb-info { background: #0f2f4d; color: #deecf9; }
+  [data-theme='dark'] .msdb-success { background: #12361f; color: #dff6dd; }
+  [data-theme='dark'] .msdb-warn { background: #3d2c05; color: #fff4ce; }
+  .msdb-cta { display: inline-block; padding: .3rem .85rem; border-radius: 999px; font-size: .82rem; font-weight: 700; text-decoration: none; background: #fff; color: #0b1020; }
+  .msdb-info .msdb-cta, .msdb-success .msdb-cta, .msdb-warn .msdb-cta { background: #0b1020; color: #fff; }
+  [data-theme='dark'] .msdb-info .msdb-cta, [data-theme='dark'] .msdb-success .msdb-cta, [data-theme='dark'] .msdb-warn .msdb-cta { background: #fff; color: #0b1020; }
+  .msdb-cta:focus-visible, .msdb-x:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+  .msdb-x { position: absolute; top: 50%; right: .6rem; translate: 0 -50%; width: 2rem; height: 2rem; border: 0; border-radius: 999px; background: transparent; color: inherit; font-size: 1.25rem; line-height: 1; cursor: pointer; opacity: .8; }
+  .msdb-x:hover { opacity: 1; background: rgb(127 127 127 / .18); }
+
+  .msdb-pop { position: fixed; z-index: 70; right: 1rem; bottom: calc(5.5rem + env(safe-area-inset-bottom)); /* clears floating chat / back-to-top buttons */ width: min(22rem, calc(100vw - 2rem)); display: grid; gap: .5rem; padding: 1.1rem 1.2rem 1.2rem; border-radius: 1rem; border: 1px solid var(--border, #d5dfea); background: var(--bg, #fff); color: var(--text, #0b1020); box-shadow: 0 24px 60px -18px rgb(0 40 90 / .45); font-size: .9rem; line-height: 1.5; animation: msdb-in .25s ease-out; }
+  .msdb-pop p { margin: 0; }
+  .msdb-pop .msdb-x { top: .5rem; translate: none; }
+  .msdb-pop-title { padding-right: 2rem; font-weight: 700; font-size: 1rem; }
+  .msdb-pop .msdb-cta { justify-self: start; margin-top: .25rem; background: var(--accent, #0078d4); color: #fff; }
+  @media (max-width: 640px) { .msdb-pop { right: .75rem; left: .75rem; width: auto; bottom: calc(4.5rem + env(safe-area-inset-bottom)); } }
+  @keyframes msdb-in { from { opacity: 0; translate: 0 .75rem; } }
+  @media (prefers-reduced-motion: reduce) { .msdb-pop { animation: none; } }
+
+  .msdb-featured { display: grid; gap: .2rem; padding: 1rem 1.2rem; border-radius: 1rem; border: 1px solid var(--border, #d5dfea); background: var(--bg-subtle, #f3f8fd); color: var(--text, #0b1020); text-decoration: none; }
+  .msdb-featured:hover { border-color: var(--accent, #0078d4); }
+  .msdb-featured-label { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent, #0078d4); }
+  .msdb-featured-title { font-weight: 700; font-size: 1.05rem; }
+  .msdb-featured-text { font-size: .88rem; color: var(--text-muted, #4a5163); }
+</style>
