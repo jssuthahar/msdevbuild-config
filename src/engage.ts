@@ -20,8 +20,11 @@ export interface Promo {
   id: string; kind: 'bar' | 'popup'; tone: 'brand' | 'info' | 'success' | 'warn';
   title: string; text: string; cta: string; url: string; startAt: string; endAt: string; paths: string[];
 }
+export interface Announcement { id: string; title: string; body: string; url: string; at: string }
 export interface SiteConfig {
   v: number; site: string;
+  /** Newest first. Shown in the bell (SiteActivity). */
+  announcements?: Announcement[];
   features: Record<string, boolean>;
   featured: { label: string; title: string; text: string; url: string } | null;
   promos: Promo[];
@@ -48,7 +51,7 @@ const write = (key: string, value: unknown) => { try { localStorage.setItem(key,
 
 /* ------------------------------------------------------------ counting */
 
-function mayCount() {
+export function mayCount() {
   try {
     const n = navigator as Navigator & { globalPrivacyControl?: boolean };
     if (n.globalPrivacyControl || n.doNotTrack === '1') return false;
@@ -56,17 +59,23 @@ function mayCount() {
   } catch { return false; }
 }
 
-/** Add 1 to {path}.n. keepalive so a click that navigates away still lands. */
-function bump(path: string) {
+/**
+ * Add 1 to {path}.{field}, creating the doc if needed. Written as update +
+ * empty mask + updateTransforms (as the blog's reactions and presence do):
+ * a bare `transform` write is rejected by the REST API. keepalive so a click
+ * that navigates away still lands.
+ */
+export function bumpField(path: string, field = 'n') {
   if (!mayCount()) return;
   const name = `projects/${FIREBASE.projectId}/databases/(default)/documents/${path}`;
   void fetch(`${FIRESTORE_REST}:commit`, {
     method: 'POST',
     keepalive: true,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ writes: [{ transform: { document: name, fieldTransforms: [{ fieldPath: 'n', increment: { integerValue: '1' } }] } }] }),
+    body: JSON.stringify({ writes: [{ update: { name, fields: {} }, updateMask: { fieldPaths: [] }, updateTransforms: [{ fieldPath: field, increment: { integerValue: '1' } }] }] }),
   }).catch(() => { /* a missed count is fine */ });
 }
+const bump = (path: string) => bumpField(path, 'n');
 
 /* ----------------------------------------------------------- campaigns */
 
@@ -208,6 +217,8 @@ function renderFeatured(cfg: SiteConfig | null) {
 }
 
 function render(cfg: SiteConfig | null) {
+  (window as unknown as { __msdbConfig?: SiteConfig | null }).__msdbConfig = cfg;
+  document.dispatchEvent(new CustomEvent('msdb:config', { detail: cfg }));
   applyFeatures(cfg);
   renderFeatured(cfg);
   const live = (cfg?.promos ?? []).filter((p) => inWindow(p) && onPage(p) && !dismissed().includes(p.id));

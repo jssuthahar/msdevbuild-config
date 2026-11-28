@@ -1,0 +1,105 @@
+---
+/**
+ * "Edit profile" for a signed-in visitor, the same on every MSDEVBUILD site
+ * (one account, one profile: profiles/{uid}). Any [data-profile-open] button
+ * opens it. Needs window.msdbAccount (src/account.ts), which <AccountMenu>
+ * sets on the blog and the Azure site's own sign-in sets there.
+ */
+import { COUNTRY_NAMES } from '../src/country';
+const countries = Object.entries(COUNTRY_NAMES).sort((a, b) => a[1].localeCompare(b[1]));
+---
+<dialog class="msdb-prof" id="msdb-profile" aria-labelledby="msdb-prof-h">
+  <form method="dialog" class="msdb-prof-x"><button aria-label="Close">×</button></form>
+  <h2 id="msdb-prof-h">Your profile</h2>
+  <p class="msdb-prof-sub">One profile for every MSDEVBUILD site. Only you can see it, and the site owner if you write in.</p>
+  <form id="msdb-prof-form" class="msdb-prof-form" novalidate>
+    <label><span>Name</span><input name="name" maxlength="60" required autocomplete="name" /></label>
+    <label><span>Headline</span><input name="headline" maxlength="80" placeholder="Cloud engineer at Contoso · learning AZ-104" /></label>
+    <label><span>About you</span><textarea name="bio" maxlength="500" rows="3" placeholder="What you are working on or learning."></textarea></label>
+    <label><span>Country</span>
+      <select name="country"><option value="">Prefer not to say</option>{countries.map(([code, name]) => <option value={code}>{name}</option>)}</select>
+    </label>
+    <label><span>LinkedIn</span><input name="linkedin" inputmode="url" placeholder="linkedin.com/in/you" /></label>
+    <label><span>GitHub</span><input name="github" inputmode="url" placeholder="github.com/you" /></label>
+    <label><span>Website</span><input name="website" inputmode="url" placeholder="https://…" /></label>
+    <p class="msdb-prof-status" role="status" aria-live="polite"></p>
+    <div class="msdb-prof-actions">
+      <button type="submit" class="msdb-prof-save">Save</button>
+      <button type="button" class="msdb-prof-cancel" data-close>Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  import { getProfile, saveProfile, type Profile } from '../src/account';
+  const FIELDS = ['name', 'headline', 'bio', 'country', 'linkedin', 'github', 'website'] as const;
+  const LABEL: Record<string, string> = { name: 'Name', linkedin: 'LinkedIn', github: 'GitHub', website: 'Website' };
+
+  const bind = () => {
+    const dlg = document.getElementById('msdb-profile') as HTMLDialogElement | null;
+    if (!dlg || dlg.dataset.bound === '') return;
+    dlg.dataset.bound = '';
+    const form = document.getElementById('msdb-prof-form') as HTMLFormElement;
+    const status = form.querySelector<HTMLElement>('.msdb-prof-status')!;
+    const save = form.querySelector<HTMLButtonElement>('.msdb-prof-save')!;
+    const el = (k: string) => form.elements.namedItem(k) as HTMLInputElement;
+    const say = (t: string, bad = false) => { status.textContent = t; status.toggleAttribute('data-bad', bad); };
+
+    async function open() {
+      if (!window.msdbAccount?.user()) { document.querySelector<HTMLElement>('[data-account-signin]')?.click(); return; }
+      form.reset(); say('Loading your profile…'); save.disabled = true;
+      dlg!.showModal();
+      try {
+        const p = await getProfile();
+        if (p) FIELDS.forEach((k) => { el(k).value = p[k] ?? ''; });
+        say(''); save.disabled = false;
+        el('name').focus();
+      } catch { say('Could not load your profile. Check your connection and try again.', true); }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      save.disabled = true; say('Saving…');
+      const p = Object.fromEntries(FIELDS.map((k) => [k, el(k).value])) as unknown as Profile;
+      try {
+        await saveProfile(p);
+        say('Saved.');
+        setTimeout(() => dlg.open && dlg.close(), 700);
+      } catch (err) {
+        const m = (err as Error).message;
+        if (m.startsWith('invalid:')) { const k = m.slice(8); say(k === 'name' ? 'Your name needs at least 2 characters.' : `${LABEL[k] ?? k}: enter a full link, for example https://…`, true); el(k)?.focus(); }
+        else say('Could not save. Please try again in a moment.', true);
+      }
+      save.disabled = false;
+    });
+    form.querySelector('[data-close]')!.addEventListener('click', () => dlg.close());
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+    document.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest?.('[data-profile-open]')) { e.preventDefault(); void open(); }
+    });
+  };
+  bind();
+  document.addEventListener('astro:after-swap', bind);
+</script>
+
+<style is:global>
+  .msdb-prof { width: min(30rem, calc(100vw - 2rem)); margin: auto; padding: 1.5rem; border: 1px solid var(--border, #d5dfea); border-radius: 1.1rem; background: var(--bg, #fff); color: var(--text, #0b1020); }
+  .msdb-prof::backdrop { background: rgb(0 0 0 / .45); backdrop-filter: blur(2px); }
+  .msdb-prof h2 { margin: 0; font-size: 1.3rem; font-weight: 700; }
+  .msdb-prof-sub { margin: .35rem 0 1rem; font-size: .85rem; color: var(--text-muted, #4a5163); }
+  .msdb-prof-x { position: absolute; top: .6rem; right: .6rem; }
+  .msdb-prof-x button { width: 2rem; height: 2rem; border: 0; border-radius: 999px; background: transparent; color: inherit; font-size: 1.3rem; cursor: pointer; }
+  .msdb-prof-x button:hover { background: var(--bg-subtle, #f3f8fd); }
+  .msdb-prof-form { display: grid; gap: .75rem; }
+  .msdb-prof-form label { display: grid; gap: .3rem; }
+  .msdb-prof-form label > span { font-size: .8rem; font-weight: 650; }
+  .msdb-prof-form input, .msdb-prof-form textarea, .msdb-prof-form select { width: 100%; padding: .55rem .7rem; border: 1px solid var(--border, #d5dfea); border-radius: .6rem; background: var(--bg, #fff); color: inherit; font: inherit; font-size: .9rem; }
+  .msdb-prof-form :focus-visible { outline: 2px solid var(--accent, #0078d4); outline-offset: 1px; }
+  .msdb-prof-status { min-height: 1.2rem; margin: 0; font-size: .85rem; color: var(--accent, #0078d4); }
+  .msdb-prof-status[data-bad] { color: #c42b1c; }
+  .msdb-prof-actions { display: flex; gap: .5rem; }
+  .msdb-prof-save, .msdb-prof-cancel { padding: .5rem 1.1rem; border-radius: 999px; font: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; }
+  .msdb-prof-save { border: 0; background: var(--accent, #0078d4); color: #fff; }
+  .msdb-prof-save:disabled { opacity: .6; cursor: progress; }
+  .msdb-prof-cancel { border: 1px solid var(--border, #d5dfea); background: transparent; color: inherit; }
+</style>

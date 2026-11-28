@@ -1,0 +1,19 @@
+---
+/**
+ * One line of real activity, for a home page or hero:
+ *   "● 12 people online now 🇮🇳 🇲🇾 🇺🇸 · 340 visitors from 18 countries in the last 10 days"
+ * The online count shows to everyone; the 10-day line only to visitors who
+ * are not signed in. Hidden until there is something true to say. Filled by
+ * src/activity.ts, which <SiteBell> starts.
+ */
+interface Props { class?: string }
+const { class: cls } = Astro.props;
+---
+<p class:list={['msdb-live', cls]} data-msdb-live hidden aria-live="polite"></p>
+
+<style is:global>
+  .msdb-live { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .6rem; margin: 0; font-size: .88rem; color: var(--text-muted, #4a5163); }
+  .msdb-live b { color: var(--text, #0b1020); }
+  .msdb-live .msdb-sep { opacity: .5; }
+  .msdb-flags { letter-spacing: .1em; }
+</style>

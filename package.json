@@ -19,7 +19,10 @@
     "./components/*": "./components/*",
     "./base.css": "./styles/base.css",
     "./firebase": "./src/firebase.ts",
-    "./engage": "./src/engage.ts"
+    "./engage": "./src/engage.ts",
+    "./activity": "./src/activity.ts",
+    "./account": "./src/account.ts",
+    "./country": "./src/country.ts"
   },
   "files": [
     "src",

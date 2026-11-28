@@ -1,0 +1,80 @@
+---
+/**
+ * Header sign-in for sites without their own (the blog). Signed out: "Sign in".
+ * Signed in: the avatar, opening a menu with Edit profile and Sign out.
+ * Includes the shared <ProfileDialog>.
+ *
+ * The site starts sign-in itself, so its own `firebase` package is used:
+ *   import { startAccount } from '@msdevbuild/config/account';
+ *   startAccount({ firebase: { ...FIREBASE, apiKey }, load: () => Promise.all([import('firebase/app'), import('firebase/auth')]) });
+ */
+import ProfileDialog from './ProfileDialog.astro';
+---
+<div class="msdb-acct" data-msdb-acct>
+  <button type="button" class="msdb-acct-in" data-account-signin title="Sign in with Google (optional): keep a profile across MSDEVBUILD sites">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></svg>
+    <span class="msdb-acct-label">Sign in</span>
+  </button>
+  <button type="button" class="msdb-acct-me" aria-expanded="false" aria-controls="msdb-acct-menu" aria-label="Your account">
+    <img alt="" width="32" height="32" referrerpolicy="no-referrer" hidden />
+    <span aria-hidden="true"></span>
+  </button>
+  <div class="msdb-acct-menu" id="msdb-acct-menu" hidden>
+    <p class="msdb-acct-name"></p>
+    <p class="msdb-acct-email"></p>
+    <button type="button" data-profile-open>Edit profile</button>
+    <button type="button" data-account-signout>Sign out</button>
+  </div>
+</div>
+<ProfileDialog />
+
+<script>
+  import { hint, type Hint } from '../src/account';
+  const bind = () => {
+    const root = document.querySelector<HTMLElement>('[data-msdb-acct]');
+    if (!root || root.dataset.bound === '') return;
+    root.dataset.bound = '';
+    const me = root.querySelector<HTMLButtonElement>('.msdb-acct-me')!;
+    const menu = root.querySelector<HTMLElement>('.msdb-acct-menu')!;
+    const img = me.querySelector('img')!;
+    const initial = me.querySelector('span')!;
+    const show = (h: Hint | null) => {
+      if (!h) { menu.hidden = true; return; }
+      root.querySelector('.msdb-acct-name')!.textContent = h.name;
+      root.querySelector('.msdb-acct-email')!.textContent = h.email;
+      me.setAttribute('aria-label', `Your account: ${h.name}`);
+      initial.textContent = (h.name || '?').trim().charAt(0).toUpperCase();
+      img.hidden = !h.photo; initial.hidden = !!h.photo;
+      if (h.photo) img.src = h.photo;
+    };
+    img.addEventListener('error', () => { img.hidden = true; initial.hidden = false; });
+    show(hint());
+    window.addEventListener('msdb-auth', (e) => show((e as CustomEvent<Hint | null>).detail));
+    const close = () => { menu.hidden = true; me.setAttribute('aria-expanded', 'false'); };
+    me.addEventListener('click', () => { const open = menu.hidden; menu.hidden = !open; me.setAttribute('aria-expanded', String(open)); });
+    menu.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('button')) close(); });
+    document.addEventListener('click', (e) => { if (!root.contains(e.target as Node)) close(); });
+    root.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { close(); me.focus(); } });
+  };
+  bind();
+  document.addEventListener('astro:after-swap', bind);
+</script>
+
+<style is:global>
+  .msdb-acct { position: relative; display: inline-flex; }
+  .msdb-acct-in, .msdb-acct-me { display: none; }
+  html[data-auth='out'] .msdb-acct-in { display: inline-flex; }
+  html[data-auth='in'] .msdb-acct-me { display: inline-grid; }
+  .msdb-acct-in { align-items: center; gap: .4rem; min-height: 2.25rem; padding: .35rem .8rem; border-radius: 999px; border: 1px solid var(--border, #d5dfea); background: var(--bg, #fff); color: var(--text, #0b1020); font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+  .msdb-acct-in:hover { border-color: var(--accent, #0078d4); }
+  .msdb-acct-in svg { width: 1.1rem; height: 1.1rem; }
+  @media (max-width: 640px) { .msdb-acct-label { display: none; } .msdb-acct-in { padding: .35rem; width: 2.25rem; justify-content: center; } }
+  .msdb-acct-me { place-items: center; width: 2.1rem; height: 2.1rem; padding: 0; overflow: hidden; border-radius: 999px; border: 2px solid var(--accent-soft, #deecf9); background: var(--accent, #0078d4); color: #fff; font-weight: 700; cursor: pointer; }
+  .msdb-acct-me img { width: 100%; height: 100%; object-fit: cover; }
+  .msdb-acct-in:focus-visible, .msdb-acct-me:focus-visible { outline: 2px solid var(--accent, #0078d4); outline-offset: 2px; }
+  .msdb-acct-menu { position: absolute; z-index: 80; top: calc(100% + .5rem); right: 0; width: min(17rem, calc(100vw - 1.5rem)); padding: .8rem; border-radius: .9rem; border: 1px solid var(--border, #d5dfea); background: var(--bg, #fff); color: var(--text, #0b1020); box-shadow: 0 18px 40px -12px rgb(0 30 60 / .35); text-align: left; }
+  .msdb-acct-name { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+  .msdb-acct-email { margin: .1rem 0 .6rem; font-size: .8rem; color: var(--text-muted, #4a5163); overflow-wrap: anywhere; }
+  .msdb-acct-menu button { display: block; width: 100%; padding: .5rem .6rem; border: 0; border-radius: .5rem; background: transparent; color: inherit; font: inherit; font-size: .88rem; text-align: left; cursor: pointer; }
+  .msdb-acct-menu button:hover { background: var(--bg-subtle, #f3f8fd); }
+</style>

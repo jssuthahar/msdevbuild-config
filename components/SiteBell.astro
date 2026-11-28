@@ -1,0 +1,80 @@
+---
+/**
+ * The bell in every site's header: announcements from admin.msdevbuild.com
+ * (Engage → Notifications, "Show in the bell") with an unread badge, plus a
+ * Live tab with who is online now and the last 10 days by country.
+ *
+ *   <SiteBell site="blog" />     next to the theme toggle
+ *
+ * Needs <SiteEngage> on the page (it loads the announcements). Logic and
+ * privacy notes: src/activity.ts.
+ */
+interface Props { site: string }
+const { site } = Astro.props;
+---
+<div class="msdb-bell" data-msdb-bell data-site={site}>
+  <button type="button" class="msdb-bell-btn" aria-expanded="false" aria-controls={`msdb-bell-${site}`} aria-label="Updates and who is online">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9Z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>
+    <span class="msdb-bell-badge" hidden></span>
+    <span class="msdb-bell-on" hidden aria-hidden="true"></span>
+  </button>
+  <div class="msdb-bell-panel" id={`msdb-bell-${site}`} role="dialog" aria-label="Updates" hidden>
+    <div class="msdb-bell-tabs" role="tablist">
+      <button type="button" role="tab" data-bell-tab="updates" aria-selected="true">Updates</button>
+      <button type="button" role="tab" data-bell-tab="live" aria-selected="false">Live</button>
+    </div>
+    <div data-bell-pane="updates" role="tabpanel">
+      <ul class="msdb-bell-list" data-bell-list><li class="msdb-bell-muted">Loading…</li></ul>
+    </div>
+    <div data-bell-pane="live" role="tabpanel" hidden>
+      <section data-bell-live></section>
+      <section data-bell-days></section>
+      <p class="msdb-bell-join" data-auth-out><button type="button" data-account-signin>Sign in</button> to save your progress and profile.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { startActivity } from '../src/activity';
+  const go = () => { const s = document.querySelector<HTMLElement>('[data-msdb-bell]')?.dataset.site; if (s) startActivity(s); };
+  go();
+  document.addEventListener('astro:after-swap', go);
+</script>
+
+<style is:global>
+  .msdb-bell { position: relative; display: inline-flex; }
+  .msdb-bell-btn { position: relative; display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 0; border-radius: .5rem; background: transparent; color: inherit; cursor: pointer; }
+  .msdb-bell-btn:hover { background: var(--nav-hover, rgb(0 120 212 / .09)); }
+  .msdb-bell-btn:focus-visible { outline: 2px solid var(--accent, #0078d4); outline-offset: 2px; }
+  .msdb-bell-btn svg { width: 1.25rem; height: 1.25rem; }
+  .msdb-bell-badge { position: absolute; top: .1rem; right: .05rem; min-width: 1.05rem; height: 1.05rem; padding: 0 .25rem; border-radius: 999px; background: #c42b1c; color: #fff; font-size: .65rem; font-weight: 700; line-height: 1.05rem; text-align: center; box-shadow: 0 0 0 2px var(--bg, #fff); }
+  .msdb-bell-on { position: absolute; bottom: .35rem; right: .35rem; width: .5rem; height: .5rem; border-radius: 50%; background: #13a10e; box-shadow: 0 0 0 2px var(--bg, #fff); }
+  .msdb-bell-panel { position: absolute; z-index: 80; top: calc(100% + .5rem); right: 0; width: min(23rem, calc(100vw - 1.5rem)); max-height: min(34rem, calc(100dvh - 6rem)); overflow: auto; border-radius: 1rem; border: 1px solid var(--border, #d5dfea); background: var(--bg, #fff); color: var(--text, #0b1020); box-shadow: 0 24px 60px -18px rgb(0 40 90 / .45); text-align: left; }
+  @media (max-width: 640px) { .msdb-bell-panel { position: fixed; top: 4rem; right: .75rem; left: .75rem; width: auto; } }
+  .msdb-bell-tabs { position: sticky; top: 0; z-index: 1; display: flex; gap: .25rem; padding: .5rem; background: var(--bg, #fff); border-bottom: 1px solid var(--border, #d5dfea); }
+  .msdb-bell-tabs button { flex: 1; padding: .45rem; border: 0; border-radius: .55rem; background: transparent; color: var(--text-muted, #4a5163); font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+  .msdb-bell-tabs button[aria-selected='true'] { background: var(--accent-soft, #deecf9); color: var(--text, #0b1020); }
+  .msdb-bell-list { list-style: none; margin: 0; padding: .35rem; }
+  .msdb-bell-list a, .msdb-bell-list li > div { display: grid; gap: .15rem; padding: .65rem .7rem; border-radius: .6rem; color: inherit; text-decoration: none; }
+  .msdb-bell-list a:hover { background: var(--bg-subtle, #f3f8fd); }
+  .msdb-bell-title { display: flex; gap: .4rem; align-items: baseline; font-weight: 650; font-size: .9rem; line-height: 1.35; }
+  .msdb-new { flex: none; width: .5rem; height: .5rem; border-radius: 50%; background: var(--accent, #0078d4); transform: translateY(-.05rem); }
+  .msdb-bell-body { font-size: .84rem; line-height: 1.45; color: var(--text-muted, #4a5163); }
+  .msdb-bell-time { font-size: .72rem; color: var(--text-muted, #4a5163); }
+  .msdb-bell-muted { padding: .5rem .7rem; font-size: .82rem; color: var(--text-muted, #4a5163); margin: 0; }
+  [data-bell-pane='live'] { padding: .5rem .9rem 1rem; }
+  [data-bell-pane='live'] section + section { margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--border, #d5dfea); }
+  .msdb-bell-big { display: flex; align-items: center; gap: .45rem; margin: .3rem 0 0; font-weight: 700; font-size: .95rem; }
+  .msdb-bell-big + .msdb-bell-muted { padding: 0; }
+  .msdb-countries { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .25rem; }
+  .msdb-countries li { display: flex; justify-content: space-between; gap: 1rem; font-size: .85rem; }
+  .msdb-countries b { font-variant-numeric: tabular-nums; }
+  .msdb-days { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; align-items: end; gap: 3px; height: 3rem; margin-top: .6rem; }
+  .msdb-days i { display: block; border-radius: 3px 3px 0 0; background: var(--accent, #0078d4); opacity: .85; }
+  .msdb-bell-join { margin: 1rem 0 0; padding: .7rem .8rem; border-radius: .7rem; background: var(--bg-subtle, #f3f8fd); font-size: .84rem; }
+  .msdb-bell-join button { border: 0; padding: 0; background: none; color: var(--accent, #0078d4); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; }
+  html[data-auth='in'] [data-auth-out] { display: none; }
+  .msdb-live-dot { flex: none; display: inline-block; width: .55rem; height: .55rem; border-radius: 50%; background: #13a10e; box-shadow: 0 0 0 0 rgb(19 161 14 / .5); animation: msdb-pulse 2.4s ease-out infinite; }
+  @keyframes msdb-pulse { 70% { box-shadow: 0 0 0 .45rem transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+  @media (prefers-reduced-motion: reduce) { .msdb-live-dot { animation: none; } }
+</style>
