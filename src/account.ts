@@ -19,6 +19,7 @@
  */
 import { FIREBASE, FIRESTORE_REST } from './firebase';
 import { COUNTRY_NAMES } from './country';
+import { ssoShare, ssoToken, ssoSignOut, ssoState, ssoSignedOutElsewhere } from './sso';
 
 export interface Hint { uid: string; name: string; email: string; photo: string }
 export interface Profile { name: string; headline: string; bio: string; country: string; linkedin: string; github: string; website: string; updatedAt?: string }
@@ -120,6 +121,8 @@ export interface AccountOptions {
 }
 
 let opts: AccountOptions | null = null;
+/** Set while this site is signing someone in, so that sign-in is shared rather than undone. */
+let fresh = false;
 let authP: Promise<{ auth: any; m: any }> | null = null;
 
 function getAuth() {
@@ -128,9 +131,31 @@ function getAuth() {
     const config = own ? { ...opts!.firebase, authDomain: opts!.authHost } : opts!.firebase;
     const app = appM.getApps().find((x: any) => x.name === 'msdb-account') ?? appM.initializeApp(config, 'msdb-account');
     const auth = m.getAuth(app);
-    m.onAuthStateChanged(auth, (u: any) => {
-      setHint(u ? { uid: u.uid, name: u.displayName || 'Reader', email: u.email || '', photo: u.photoURL || '' } : null);
-      try { sessionStorage.removeItem('msdb-auth-redirect'); } catch { /* blocked */ }
+    let triedSso = false;
+    let first = true;
+    m.onAuthStateChanged(auth, async (u: any) => {
+      try { if (sessionStorage.getItem('msdb-auth-redirect')) fresh = true; sessionStorage.removeItem('msdb-auth-redirect'); } catch { /* blocked */ }
+      // Only the first report on a page is the remembered user. Signed out on
+      // another MSDEVBUILD site since, and not signing in here now? Sign out.
+      const remembered = first && !fresh;
+      first = false;
+      if (u && remembered && ssoSignedOutElsewhere()) {
+        await m.signOut(auth);
+        return;
+      }
+      if (u) {
+        setHint({ uid: u.uid, name: u.displayName || 'Reader', email: u.email || '', photo: u.photoURL || '' });
+        // Share it, so the other MSDEVBUILD sites sign in too (src/sso.ts).
+        if (ssoState() !== 'in') void u.getIdToken().then(ssoShare).catch(() => {});
+        return;
+      }
+      // Signed out here: signed in on another MSDEVBUILD site? Then sign in quietly.
+      if (!triedSso) {
+        triedSso = true;
+        const token = await ssoToken();
+        if (token) { try { fresh = true; await m.signInWithCustomToken(auth, token); return; } catch { fresh = false; } }
+      }
+      setHint(null);
     });
     m.getRedirectResult(auth).catch(() => {});
     return { auth, m };
@@ -142,6 +167,7 @@ export async function signIn() {
   window.dispatchEvent(new CustomEvent('msdb-sync', { detail: { state: 'signing-in' } }));
   try { sessionStorage.setItem('msdb-auth-redirect', '1'); } catch { /* blocked */ }
   const { auth, m } = await getAuth();
+  fresh = true;
   const provider = new m.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   try {
@@ -151,19 +177,24 @@ export async function signIn() {
     // Installed app on iOS and strict popup blockers: a full-page redirect instead.
     if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') await m.signInWithRedirect(auth, provider);
     else if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
+      fresh = false;
       window.dispatchEvent(new CustomEvent('msdb-sync', { detail: { state: 'error', code } }));
       return;
     }
+    else fresh = false; // closed the popup
   }
   window.dispatchEvent(new CustomEvent('msdb-sync', { detail: { state: 'idle' } }));
 }
 
+/** Signs out here and on every MSDEVBUILD site. */
 export async function signOut() {
   if (!opts) return;
+  await ssoSignOut();
   const { auth, m } = await getAuth();
   await m.signOut(auth);
   setHint(null);
 }
+
 
 /** Once per page load. Safe to call again after a view-transition swap. */
 export function startAccount(options: AccountOptions) {
@@ -184,16 +215,23 @@ export function startAccount(options: AccountOptions) {
     },
   };
   if (!first) return;
-  // Signed in before, or back from a redirect sign-in: confirm in the background.
+  // Signed in before (Firebase then confirms, or signs out if another site
+  // signed out since), back from a redirect sign-in, or signed in on another
+  // MSDEVBUILD site (sso): load Firebase in the background.
   let back = false;
   try { back = !!sessionStorage.getItem('msdb-auth-redirect'); } catch { /* blocked */ }
-  if (h || back) {
+  if (h || back || ssoState() === 'in') {
     const go = () => void getAuth();
     'requestIdleCallback' in window ? requestIdleCallback(go, { timeout: 3000 }) : setTimeout(go, 1);
   }
   document.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (t.closest?.('[data-account-signin]')) { e.preventDefault(); void signIn(); }
+    if (t.closest?.('[data-account-signin]')) {
+      e.preventDefault();
+      // The "Sign in to MSDEVBUILD" dialog when the page has it, else straight to Google.
+      const dlg = document.getElementById('msdb-signin') as HTMLDialogElement | null;
+      if (dlg) dlg.showModal(); else void signIn();
+    }
     else if (t.closest?.('[data-account-signout]')) { e.preventDefault(); void signOut(); }
   });
 }

@@ -23,7 +23,8 @@
     "./activity": "./src/activity.ts",
     "./account": "./src/account.ts",
     "./country": "./src/country.ts",
-    "./scripts/*": "./scripts/*"
+    "./scripts/*": "./scripts/*",
+    "./sso": "./src/sso.ts"
   },
   "files": [
     "components",

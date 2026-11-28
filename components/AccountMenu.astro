@@ -9,9 +9,15 @@
  *   startAccount({ firebase: { ...FIREBASE, apiKey }, load: () => Promise.all([import('firebase/app'), import('firebase/auth')]) });
  */
 import ProfileDialog from './ProfileDialog.astro';
+import SignInDialog from './SignInDialog.astro';
+interface Props {
+  /** App icon shown in the "Sign in to MSDEVBUILD" dialog. */
+  logo?: string;
+}
+const { logo = '/icon-192.png' } = Astro.props;
 ---
 <div class="msdb-acct" data-msdb-acct>
-  <button type="button" class="msdb-acct-in" data-account-signin title="Sign in with Google (optional): keep a profile across MSDEVBUILD sites">
+  <button type="button" class="msdb-acct-in" data-account-signin title="Sign in to MSDEVBUILD (optional): one account for the blog and Azure">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></svg>
     <span class="msdb-acct-label">Sign in</span>
   </button>
@@ -27,6 +33,7 @@ import ProfileDialog from './ProfileDialog.astro';
   </div>
 </div>
 <ProfileDialog />
+<SignInDialog logo={logo} />
 
 <script>
   import { hint, type Hint } from '../src/account';
